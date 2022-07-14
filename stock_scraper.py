@@ -14,6 +14,9 @@ robinhood_html = requests.get('https://robinhood.com/stocks/'+ticker.upper()).te
 robinhood_soup = BeautifulSoup(robinhood_html, 'lxml')
 #robinhood_soup now also contains a soup of a valid stock info page
 
+td_html = requests.get('https://research.tdameritrade.com/grid/public/research/stocks/summary?symbol='+ticker.lower()).text
+td_soup = BeautifulSoup(td_html, 'lxml')
+
 company_name = yahoo_soup.find('h1', class_ = 'D(ib) Fz(18px)').text
 #company_name contains the name of the stock, and its ticker symbol as a string
 
@@ -23,12 +26,12 @@ if 'View more' in rh_desc:
     rh_desc = rh_desc[:-10]
 #rh_desc contains a brief description of the company and its operations
 
-price = yahoo_soup.find('fin-streamer', class_ = 'Fw(b) Fz(36px) Mb(-4px) D(ib)').text
+price = robinhood_soup.find('span', class_ = 'up')['aria-label']
 #price contains the current stock price
 
-gain_loss = yahoo_soup.find_all('fin-streamer', class_ = 'Fw(500) Pstart(8px) Fz(24px)')
-#gain_loss contains the day's gain/loss in dollars at gain_loss[0],
-# and in percent at gain_loss[1]
+outer_gain_loss = robinhood_soup.find('div', class_ = 'css-gg4vpm')
+gain_loss = outer_gain_loss.find('span', class_ = 'css-w8p71j').text
+#gain_loss contains the day's gain/loss in dollars and in percent
 
 yahoo_metrics = yahoo_soup.find_all('td', class_ = 'Ta(end) Fw(600) Lh(14px)')
 #yahoo_metrics contains a lot of info:
@@ -51,13 +54,13 @@ yahoo_metrics = yahoo_soup.find_all('td', class_ = 'Ta(end) Fw(600) Lh(14px)')
 
 related_news = yahoo_soup.find('li', class_ = 'js-stream-content Pos(r)')
 top_article = related_news.find('a').text
-#top+article contains the #1 related article on yahoo finance
+#top_article contains the #1 related article on yahoo finance
 
 #tweak the following to choose what prints to the user or output file
 print('Stock: '+company_name)
 print('Description: '+rh_desc)
-print('Current stock price: $'+price)
-print('Today\'s change: ' +gain_loss[0].text+ ', '+gain_loss[1].text)
+print('Current stock price: '+price)
+print('Today\'s change: ' +gain_loss)
 print('Today\'s volume: ' +yahoo_metrics[6].text)
 print('Market Cap: ' +yahoo_metrics[8].text)
 print('Top headline: \"'+top_article+'\"')
